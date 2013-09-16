@@ -4,9 +4,15 @@ function State(name){
     this.actionsList = [];
 }
 
+<<<<<<< HEAD
 State.prototype.addAction = function (nextState, reward){
     var action =  {
         name: nextState,
+=======
+State.prototype.addAction = function (nextState, reward, actionName){
+    var action =  {
+        name: actionName===undefined ? nextState : actionName,
+>>>>>>> master
         nextState: nextState,
         reward: reward
     };
@@ -26,6 +32,15 @@ function QLearner(gamma){
     this.currentState = null;
 }
 
+<<<<<<< HEAD
+=======
+QLearner.prototype.add = function (from, to, reward, actionName){
+    if (!this.states[from]) this.addState(from);
+    if (!this.states[to]) this.addState(to);
+    this.states[from].addAction(to, reward, actionName);
+};
+
+>>>>>>> master
 QLearner.prototype.addState = function (name){
     var state = new State(name);
     this.states[name] = state;
@@ -75,7 +90,11 @@ QLearner.prototype.learn = function(steps){
 };
 
 QLearner.prototype.bestAction = function(state){
+<<<<<<< HEAD
     var stateRewards = this.rewards[state];
+=======
+    var stateRewards = this.rewards[state] || {};
+>>>>>>> master
     var bestAction = null;
     for (var action in stateRewards){
         if (stateRewards.hasOwnProperty(action)){
@@ -91,6 +110,17 @@ QLearner.prototype.bestAction = function(state){
     return bestAction;
 };
 
+<<<<<<< HEAD
+=======
+QLearner.prototype.applyAction = function(actionName){
+    var actionObject = this.states[this.currentState.name].actions[actionName];
+    if (actionObject){
+        this.currentState = this.states[actionObject.nextState];
+    }
+    return actionObject && this.currentState;
+};
+
+>>>>>>> master
 QLearner.prototype.runOnce = function(){
     var best = this.bestAction(this.currentState.name);
     var action = this.states[this.currentState.name].actions[best];

@@ -13,7 +13,14 @@ This algorithm is suitable to search, path finding, control, as it retains in me
 Demo
 -----
 
+<<<<<<< HEAD
 [Example](http://nrox.github.io/q-learning.js/)
+=======
+[Example 1: basic](http://nrox.github.io/q-learning.js/test1.html)
+
+[Example 2: enhanced](http://nrox.github.io/q-learning.js/test2.html)
+
+>>>>>>> master
 
 Usage Example
 =======
@@ -25,6 +32,7 @@ The argument to the constructor is the gamma parameter. Default 0.5
 
     var learner = new QLearner(0.8);
 
+<<<<<<< HEAD
 Add a state named s0 to the learner
 
     var s0 = learner.addState('s0');
@@ -44,6 +52,27 @@ Add other states, actions, anytime
     s2.addAction('s1', 0.8);
     //recurrent
     s1.addAction('s1');
+=======
+
+Add transitions like this:
+
+     learner.add(fromState, toState, reward, actionName);
+
+In this last expression, if fromState or toState do not exist they are added automatically. If no reward is know pass
+*undefined*, if actionName is not important leave it undefined.
+
+If no reward is known and actionName is not important:
+
+    learner.add(fromState, toState);
+
+Reward is known and actionName is not important:
+
+    learner.add(fromState, toState, reward);
+
+Reward is not known and actionName is important
+
+    learner.add(fromState, toState, undefined, actionName);
+>>>>>>> master
 
 States and actions set, then make it learn. The argument is the number of iterations.
 
@@ -56,7 +85,11 @@ To use what the learner *knows*. Set an initial state
 
     learner.setState('s0');
 
+<<<<<<< HEAD
 then call
+=======
+then call to choose the best action and automatically apply it.
+>>>>>>> master
 
     learner.runOnce();
 
@@ -64,6 +97,13 @@ and get the next state with
 
     var cur = learner.getState();
 
+<<<<<<< HEAD
+=======
+or get the best action:
+
+    var ba = learner.bestAction();
+
+>>>>>>> master
 or run it until it stays in the same state, or solution.
 
     var current = null;
