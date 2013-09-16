@@ -2,34 +2,20 @@
 
 var ql = new QLearner(0.8);
 
-var s;
+ql.add(0,4,0);
+ql.add(1,3,0);
+ql.add(1,5,100);
+ql.add(2,3,0);
+ql.add(3,1,0);
+ql.add(3,2,0);
+ql.add(3,4,0);
+ql.add(4,0,0);
+ql.add(4,5,100);
+ql.add(5,1,0);
+ql.add(5,4,0);
+ql.add(5,5,100);
 
-s = ql.addState(0);
-s.addAction(4);
-
-s = ql.addState(1);
-s.addAction(3);
-s.addAction(5, 100);
-
-s = ql.addState(2);
-s.addAction(3);
-
-s = ql.addState(3);
-s.addAction(1);
-s.addAction(2);
-s.addAction(4);
-
-s = ql.addState(4);
-s.addAction(0);
-s.addAction(3);
-s.addAction(5, 100);
-
-s = ql.addState(5);
-s.addAction(1);
-s.addAction(4);
-s.addAction(5, 100);
-
-ql.learn(100);
+ql.learn(500);
 
 setInterval(function(){
     var cur = ql.currentState;

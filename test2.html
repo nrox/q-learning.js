@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>q-learning.js</title>
+    <meta name="description" content="Q-learning algorithm implementation ins Javascript">
+    <meta name="keywords" content="Q-Learning, javascript, game">
+    <style>
+        body {
+            font-family: monospace;
+            font-size: 120%;
+            padding: 1%;
+        }
+        canvas {
+            border: 2px solid black;
+            width: 300px;
+            margin: auto;
+            display: block;
+        }
+        #buttons {
+            width: 300px;
+            margin: auto;
+            display: block;
+        }
+
+        #buttons * {
+            width: 25%;
+        }
+
+        #score {
+            text-align: right;
+        }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="q-learning.js"></script>
+</head>
+<body>
+<p>
+    <a href="https://github.com/nrox/q-learning.js">GitHub repo</a>
+</p>
+<p>
+    This is a practical implementation of the q-learning algorithm to learning in a game.
+    The goal is to catch the green (+1 point) while avoiding the gray (-1 point). Both types
+    are added to the game with equal distribution.
+    The actions are move left, or move right, or stay.
+    An exploration/exploitation ratio is 0.1. With this probability a random action is taken.
+</p>
+<p>
+    With no learning the score should make a random walk around 0. With learning the score should increase.
+</p>
+<div id="buttons">
+    <span id="score">score</span>
+</div>
+<canvas id="canvas" width="300px" height="300px"></canvas>
+<script src="test2.js"></script>
+</body>
+</html>
