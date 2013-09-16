@@ -111,7 +111,14 @@ QLearner.prototype.bestAction = function(state){
 };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+QLearner.prototype.knowsAction = function(state, action){
+    return (this.rewards[state] || {}).hasOwnProperty(action);
+};
+
+>>>>>>> master
 QLearner.prototype.applyAction = function(actionName){
     var actionObject = this.states[this.currentState.name].actions[actionName];
     if (actionObject){
