@@ -15,7 +15,7 @@ Demo
 
 [Example 1: basic](http://nrox.github.io/q-learning.js/test1.html)
 
-[Example 2: enhanced](http://nrox.github.io/q-learning.js/test2.html)
+[Example 2: game agent](http://nrox.github.io/q-learning.js/test2.html)
 
 
 Usage Example
