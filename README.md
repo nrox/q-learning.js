@@ -17,6 +17,8 @@ Demo
 
 [Example 2: game agent](http://nrox.github.io/q-learning.js/test2.html)
 
+[Example 3: game agent](https://pratheeswaran.github.io/q-learning.js/test3.html)
+
 
 Usage Example
 =======
