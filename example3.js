@@ -7,18 +7,16 @@ function GameBoard() {
     this.width = 15; //cells
     this.height = 15; //cells
     this.board = [];
+
     this.empty = 0;
-    this.agent = 1;
-    this.food = 2;
-    this.poison = 3;
+    this.intruder = 1;
+    this.citizen = 2;
+    this.stay =3;
 
-    this.foodPoisonRatio = 0.5;
-    this.density = 0.1;
-
+    this.density = 0.3;
 
     this.score = {};
-    this.score[this.food] = 1;
-    this.score[this.poison] = 1;
+    this.score[this.citizen] = 1;
     this.score[this.empty] = 1;
 
     this.userAction = undefined;
@@ -26,21 +24,28 @@ function GameBoard() {
     this.canvasContext = undefined;
 
     this.colorDictionary = {};
-    this.colorDictionary[this.food] = 'green';
+    this.colorDictionary[this.citizen] = 'green';
     this.colorDictionary[this.empty] = 'white';
-    this.colorDictionary[this.poison] = 'gray';
-    this.colorDictionary[this.agent] = 'black';
+    this.colorDictionary[this.intruder] = 'red';
 
     this.rewardDictionary = {};
-    this.rewardDictionary[this.food] = 1;
-    this.rewardDictionary[this.empty] = 0;
-    this.rewardDictionary[this.poison] = -1;
-    this.agentPosition = {
+    //collide with intruder
+    this.rewardDictionary[this.intruder] = -100;
+    //move to empty space
+    this.rewardDictionary[this.empty] = -1;
+    //stay in the same position
+    this.rewardDictionary[this.stay] = 0;
+
+    this.intruderPosition = {
         line: this.height - 1,
         column: ~~(this.width / 2)
     };
+
+    this.timeStep = 0;
+
     this.init();
 }
+
 
 GameBoard.prototype.init = function () {
     this.board = []; //the representation of the world
@@ -57,9 +62,10 @@ GameBoard.prototype.init = function () {
 GameBoard.prototype.setPosition = function (column) {
     //set agents position
     column = (column + this.width) % this.width; //circular world
-    this.agentPosition.column = column;
-    this.board[column][this.agentPosition.line] = this.agent;
+    this.intruderPosition.column = column;
+    this.board[column][this.intruderPosition.line] = this.agent;
 };
+
 
 GameBoard.prototype.addGreens = function () {
     //insert more food and poison
@@ -68,7 +74,7 @@ GameBoard.prototype.addGreens = function () {
             this.board[column][line] = (Math.random() < this.density) ? this.food : this.empty;
         }
     }
-    this.setPosition(this.agentPosition.column);
+    this.setPosition(this.intruderPosition.column);
 };
 
 GameBoard.prototype.moveObjectsDown = function () {
@@ -86,8 +92,8 @@ GameBoard.prototype.currentState = function () {
     var line, column;
     for (var dcol = -1; dcol <= 1; dcol++) {
         for (var dline = -3; dline < 0; dline++) {
-            line = (this.agentPosition.line + dline + this.height) % this.height;
-            column = (this.agentPosition.column + dcol + this.width) % this.width;
+            line = (this.intruderPosition.line + dline + this.height) % this.height;
+            column = (this.intruderPosition.column + dcol + this.width) % this.width;
             state += this.board[column][line];
         }
     }
@@ -156,10 +162,10 @@ function step() {
     //action is a number -1,0,+1
     action = Number(action);
     //apply the action
-    game.setPosition(game.agentPosition.column + action);
+    game.setPosition(game.intruderPosition.column + action);
     //get next state, compute reward
     game.moveObjectsDown();
-    var collidedWith = game.objectAt(game.agentPosition.column, game.agentPosition.line);
+    var collidedWith = game.objectAt(game.intruderPosition.column, game.intruderPosition.line);
     var reward = game.rewardDictionary[collidedWith];
 
     var nextState = game.currentState();
