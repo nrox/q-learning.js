@@ -17,7 +17,7 @@ Demo
 
 [Example 2: game agent](http://nrox.github.io/q-learning.js/example2.html)
 
-[Example 2: learning to keep distance](http://nrox.github.io/q-learning.js/example3.html)
+[Example 3: learning to keep distance](http://nrox.github.io/q-learning.js/example3.html)
 
 
 Usage Example

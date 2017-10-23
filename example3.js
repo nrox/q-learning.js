@@ -1,5 +1,4 @@
-
-function GameBoard(){
+function GameBoard() {
     this.canvasId = "canvas";
     this.scoreId = "score";
 
@@ -10,10 +9,12 @@ function GameBoard(){
     this.board = [];
     this.empty = 0;
     this.agent = 1;
-    this.foodPoisonRatio = 0.5;
-    this.density = 0.1;
     this.food = 2;
     this.poison = 3;
+
+    this.foodPoisonRatio = 0.5;
+    this.density = 0.1;
+
 
     this.score = {};
     this.score[this.food] = 1;
@@ -35,17 +36,17 @@ function GameBoard(){
     this.rewardDictionary[this.empty] = 0;
     this.rewardDictionary[this.poison] = -1;
     this.agentPosition = {
-        line: this.height-1,
-        column: ~~(this.width/2)
+        line: this.height - 1,
+        column: ~~(this.width / 2)
     };
     this.init();
 }
 
-GameBoard.prototype.init = function(){
+GameBoard.prototype.init = function () {
     this.board = []; //the representation of the world
-    for (var column = 0; column < this.width; column++){
+    for (var column = 0; column < this.width; column++) {
         this.board.push([]);
-        for (var line = 0; line < this.height; line++){
+        for (var line = 0; line < this.height; line++) {
             this.board[column].push(this.empty);
         }
     }
@@ -53,40 +54,38 @@ GameBoard.prototype.init = function(){
     this.canvasContext = canvas.getContext('2d');
 };
 
-GameBoard.prototype.setPosition = function(column){
+GameBoard.prototype.setPosition = function (column) {
     //set agents position
     column = (column + this.width) % this.width; //circular world
     this.agentPosition.column = column;
     this.board[column][this.agentPosition.line] = this.agent;
 };
 
-GameBoard.prototype.addMoreObjects = function(){
+GameBoard.prototype.addGreens = function () {
     //insert more food and poison
-    for (var column = 0; column < this.width; column++){
-        if (Math.random()<this.density){
-            this.board[column][0] = Math.random() < this.foodPoisonRatio ? this.food : this.poison;
-        } else {
-            this.board[column][0] = this.empty;
+    for (var line = 0; line < this.height; line++) {
+        for (var column = 0; column < this.width; column++) {
+            this.board[column][line] = (Math.random() < this.density) ? this.food : this.empty;
         }
     }
     this.setPosition(this.agentPosition.column);
 };
 
-GameBoard.prototype.moveObjectsDown = function(){
+GameBoard.prototype.moveObjectsDown = function () {
     //advance objects position 1 cell down
-    for (var line = this.height - 1; line > 0; line--){
-        for (var column = 0; column < this.width; column++){
-            this.board[column][line] = this.board[column][line-1];
+    for (var line = this.height - 1; line > 0; line--) {
+        for (var column = 0; column < this.width; column++) {
+            this.board[column][line] = this.board[column][line - 1];
         }
     }
 };
 
-GameBoard.prototype.currentState = function(){
+GameBoard.prototype.currentState = function () {
     //get a string representation of the objects in the 3x3 square in front of the agent
     var state = "S";
     var line, column;
-    for (var dcol = -1; dcol <= 1 ; dcol++){
-        for (var dline = -3; dline < 0 ; dline++){
+    for (var dcol = -1; dcol <= 1; dcol++) {
+        for (var dline = -3; dline < 0; dline++) {
             line = (this.agentPosition.line + dline + this.height) % this.height;
             column = (this.agentPosition.column + dcol + this.width) % this.width;
             state += this.board[column][line];
@@ -95,28 +94,28 @@ GameBoard.prototype.currentState = function(){
     return state;
 };
 
-GameBoard.prototype.objectAt = function(column, line){
+GameBoard.prototype.objectAt = function (column, line) {
     return this.board[column][line];
 };
 
-GameBoard.prototype.randomAction = function(){
+GameBoard.prototype.randomAction = function () {
     //actions are -1,0,+1
     return ~~(Math.random() * 3) - 1;
 };
 
-GameBoard.prototype.draw = function(){
-    var dx = this.canvasWidth/this.width;
-    var dy = this.canvasHeight/this.height;
-    var radius = Math.min(dx, dy)/2.5;
+GameBoard.prototype.draw = function () {
+    var dx = this.canvasWidth / this.width;
+    var dy = this.canvasHeight / this.height;
+    var radius = Math.min(dx, dy) / 2.5;
     var pi2 = Math.PI * 2;
     var context = this.canvasContext;
-    context.clearRect ( 0 , 0 , this.canvasWidth , this.canvasHeight);
+    context.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
 
-    for (var line = 0; line < this.height; line++){
-        for (var column = 0; column < this.width; column++){
-            if (this.board[column][line]===this.empty) continue;
+    for (var line = 0; line < this.height; line++) {
+        for (var column = 0; column < this.width; column++) {
+            if (this.board[column][line] === this.empty) continue;
             context.beginPath();
-            context.arc(dx * (column + 0.5), dy * (line + 0.5), this.board[column][line]!==this.agent ? radius : radius*1.2, 0, pi2, false);
+            context.arc(dx * (column + 0.5), dy * (line + 0.5), this.board[column][line] !== this.agent ? radius : radius * 1.2, 0, pi2, false);
             context.fillStyle = this.colorDictionary[this.board[column][line]];
             context.fill();
             context.lineWidth = 2;
@@ -132,17 +131,17 @@ var learner = new QLearner();
 
 var sid = setInterval(step, 500);
 
-function slow(){
+function slow() {
     clearInterval(sid);
     sid = setInterval(step, 500);
 }
 
-function fast(){
+function fast() {
     clearInterval(sid);
     sid = setInterval(step, 20);
 }
 
-function step(){
+function step() {
     //memorize current state
 
     var currentState = game.currentState();
@@ -151,7 +150,7 @@ function step(){
     //and the best action
     var action = learner.bestAction(currentState);
     //if there is no best action try to explore
-    if (action===null || action === undefined || (!learner.knowsAction(currentState, randomAction) && Math.random()<game.exploration)){
+    if (action === null || action === undefined || (!learner.knowsAction(currentState, randomAction) && Math.random() < game.exploration)) {
         action = randomAction;
     }
     //action is a number -1,0,+1
@@ -169,15 +168,21 @@ function step(){
     //make que q-learning algorithm number of iterations=10 or it could be another number
     learner.learn(10);
 
-    game.addMoreObjects();
+    game.addGreens();
 
     //some feedback on performance
     game.score[collidedWith]++;
+
+    updateSummary();
+
+    game.draw();
+}
+
+function updateSummary() {
     var summary = "<br />green==food: " + game.score[game.food];
     summary += "<br />gray=poison: " + game.score[game.poison];
-    summary += "<br />poison/food: " + Math.round(100*game.score[game.poison]/game.score[game.food]) + "%";
+    summary += "<br />poison/food: " + Math.round(100 * game.score[game.poison] / game.score[game.food]) + "%";
     document.getElementById(game.scoreId).innerHTML = summary;
-    game.draw();
 }
 
 
