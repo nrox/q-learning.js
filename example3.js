@@ -1,128 +1,79 @@
-function GameBoard() {
-    this.canvasId = "canvas";
-    this.scoreId = "score";
+var config = {
+    canvas: {
+        id: 'canvas',
+        width: 300,
+        height: 300
+    },
+    matrix: {
+        height: 15,
+        width: 15
+    },
+    color: {
+        empty: 'white',
+        intruder: 'red',
+        citizen: 'blue'
+    },
+    reward: {
+        collide: -100, //reward to stay in a place which will be occupied by and intruder
+        moveToCitizen: -5, //reward to moving to an already occupied cell (with a citizen)
+        moveToEmpty: -1, //reward of moving to am empty cell
+        stay: 0 //reward of staying in the same cell and nothing happens
+    },
+    density: 0.3,
+    exploration: 0.2,
+    scoreId: 'score'
+};
 
-    this.canvasWidth = 300;
-    this.canvasHeight = 300;
-    this.width = 15; //cells
-    this.height = 15; //cells
-    this.board = [];
-
-    this.empty = 0;
-    this.intruder = 1;
-    this.citizen = 2;
-    this.stay =3;
-
-    this.density = 0.3;
-
-    this.score = {};
-    this.score[this.citizen] = 1;
-    this.score[this.empty] = 1;
-
-    this.userAction = undefined;
-    this.exploration = 0.2;
-    this.canvasContext = undefined;
-
-    this.colorDictionary = {};
-    this.colorDictionary[this.citizen] = 'green';
-    this.colorDictionary[this.empty] = 'white';
-    this.colorDictionary[this.intruder] = 'red';
-
-    this.rewardDictionary = {};
-    //collide with intruder
-    this.rewardDictionary[this.intruder] = -100;
-    //move to empty space
-    this.rewardDictionary[this.empty] = -1;
-    //stay in the same position
-    this.rewardDictionary[this.stay] = 0;
-
-    this.intruderPosition = {
-        line: this.height - 1,
-        column: ~~(this.width / 2)
-    };
-
-    this.timeStep = 0;
-
-    this.init();
+function GameBoard(config) {
+    this.time = 0;
+    this.matrix = []; //the representation of the world
+    for (var column = 0; column < config.matrix.width; column++) {
+        this.matrix.push([]);
+        for (var line = 0; line < config.matrix.height; line++) {
+            this.matrix[column].push(null);
+        }
+    }
+    var canvas = document.getElementById(config.canvas.id);
+    this.canvasContext = canvas.getContext('2d');
+    this.fillBoard();
 }
 
-
-GameBoard.prototype.init = function () {
-    this.board = []; //the representation of the world
-    for (var column = 0; column < this.width; column++) {
-        this.board.push([]);
-        for (var line = 0; line < this.height; line++) {
-            this.board[column].push(this.empty);
-        }
+/**
+ * update agent position on board
+ */
+GameBoard.prototype.updateAgent = function (agent) {
+    var x, y;
+    //clear the previous position
+    if (agent.previousPosition) {
+        x = agent.previousPosition.x;
+        y = agent.previousPosition.y;
+        this.matrix[x][y] = null;
     }
-    var canvas = document.getElementById(this.canvasId);
-    this.canvasContext = canvas.getContext('2d');
+    //set the new position on the board
+    x = agent.position.x;
+    y = agent.position.y;
+    this.matrix[x][y] = agent;
 };
 
-GameBoard.prototype.setPosition = function (column) {
-    //set agents position
-    column = (column + this.width) % this.width; //circular world
-    this.intruderPosition.column = column;
-    this.board[column][this.intruderPosition.line] = this.agent;
-};
-
-
-GameBoard.prototype.addGreens = function () {
-    //insert more food and poison
-    for (var line = 0; line < this.height; line++) {
-        for (var column = 0; column < this.width; column++) {
-            this.board[column][line] = (Math.random() < this.density) ? this.food : this.empty;
-        }
-    }
-    this.setPosition(this.intruderPosition.column);
-};
-
-GameBoard.prototype.moveObjectsDown = function () {
-    //advance objects position 1 cell down
-    for (var line = this.height - 1; line > 0; line--) {
-        for (var column = 0; column < this.width; column++) {
-            this.board[column][line] = this.board[column][line - 1];
-        }
-    }
-};
-
-GameBoard.prototype.currentState = function () {
-    //get a string representation of the objects in the 3x3 square in front of the agent
-    var state = "S";
-    var line, column;
-    for (var dcol = -1; dcol <= 1; dcol++) {
-        for (var dline = -3; dline < 0; dline++) {
-            line = (this.intruderPosition.line + dline + this.height) % this.height;
-            column = (this.intruderPosition.column + dcol + this.width) % this.width;
-            state += this.board[column][line];
-        }
-    }
-    return state;
-};
-
-GameBoard.prototype.objectAt = function (column, line) {
-    return this.board[column][line];
-};
-
-GameBoard.prototype.randomAction = function () {
-    //actions are -1,0,+1
-    return ~~(Math.random() * 3) - 1;
+GameBoard.prototype.clear = function () {
+    var context = this.canvasContext;
+    context.clearRect(0, 0, config.canvas.width, config.canvas.height);
 };
 
 GameBoard.prototype.draw = function () {
-    var dx = this.canvasWidth / this.width;
-    var dy = this.canvasHeight / this.height;
+    var dx = config.canvas.width / config.matrix.width;
+    var dy = config.canvas.height / config.matrix.height;
     var radius = Math.min(dx, dy) / 2.5;
     var pi2 = Math.PI * 2;
     var context = this.canvasContext;
-    context.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
 
-    for (var line = 0; line < this.height; line++) {
-        for (var column = 0; column < this.width; column++) {
-            if (this.board[column][line] === this.empty) continue;
+    for (var column = 0; column < this.matrix.length; column++) {
+        for (var line = 0; line < this.matrix[0].length; line++) {
+            var agent = this.matrix[column][line];
+            var color = agent ? config.color[agent.mark] : config.color.empty;
             context.beginPath();
-            context.arc(dx * (column + 0.5), dy * (line + 0.5), this.board[column][line] !== this.agent ? radius : radius * 1.2, 0, pi2, false);
-            context.fillStyle = this.colorDictionary[this.board[column][line]];
+            context.arc(dx * (column + 0.5), dy * (line + 0.5), radius, 0, pi2, false);
+            context.fillStyle = color;
             context.fill();
             context.lineWidth = 2;
             context.strokeStyle = '#333333';
@@ -131,11 +82,97 @@ GameBoard.prototype.draw = function () {
     }
 };
 
-var game = new GameBoard();
+
+function Intruder(config) {
+    this.mark = 'intruder';
+}
+
+function Citizen(config) {
+    this.mark = 'citizen';
+}
+
+/**
+ * functions to set position, for citizens and intruder
+ */
+Intruder.prototype.setPosition = Citizen.prototype.setPosition = function (x, y) {
+    this.previousPosition = this.position;
+    if (!this.position) this.position = {};
+    this.position.x = x;
+    this.position.y = y;
+};
+
+/**
+ * intruder position is predefined as a function of time
+ * @param board
+ * @param time
+ */
+Intruder.prototype.move = function (matrix, time) {
+    var cols = matrix.length;
+    var rows = matrix[0].length;
+    var v = 0.1;
+    var x = ~~(cols * 0.5 * (Math.sin(2 * v * time) + 1));
+    var y = ~~(rows * 0.5 * (Math.cos(v * time) + 1));
+    this.setPosition(x, y);
+};
+
+
+GameBoard.prototype.fillBoard = function () {
+    //insert more food and poison
+    this.citizens = [];
+    for (var column = 0; column < this.matrix.length; column++) {
+        for (var line = 0; line < this.matrix[0].length; line++) {
+            if (Math.random() < config.density) {
+                var citizen = new Citizen(config);
+                citizen.setPosition(column, line);
+                this.citizens.push(citizen);
+                this.matrix[column][line] = citizen;
+            }
+        }
+    }
+    this.intruder = new Intruder(config);
+    this.intruder.move(this.matrix, this.time);
+
+};
+
+
+Citizen.prototype.currentState = function (matrix) {
+    //get a representation of the objects in the 3x3 square in front of the agent
+    var state = [];
+    var x = this.position.x;
+    var y = this.position.y;
+    for (var dcol = -1; dcol <= 1; dcol++) {
+        for (var dline = -1; dline <= 1; dline++) {
+            var line = ((y + dline) + config.matrix.height) % config.matrix.height;
+            var column = ((x + dcol) + config.matrix.width) % config.matrix.width;
+            state.push(matrix[column][line]);
+        }
+    }
+    return state;
+};
+
+Citizen.prototype.currentStateString = function (matrix) {
+    return this.currentState(matrix).join('');
+};
+
+GameBoard.prototype.objectAt = function (column, line) {
+    return this.matrix[column][line];
+};
+
+GameBoard.prototype.randomAction = function () {
+    //actions are -1,0,+1
+    return ~~(Math.random() * 3) - 1;
+};
+
+
+var game = new GameBoard(config);
+
+game.draw();
+
 
 var learner = new QLearner();
 
-var sid = setInterval(step, 500);
+var sid;
+//= setInterval(step, 500);
 
 function slow() {
     clearInterval(sid);
@@ -178,8 +215,6 @@ function step() {
 
     //some feedback on performance
     game.score[collidedWith]++;
-
-    updateSummary();
 
     game.draw();
 }
