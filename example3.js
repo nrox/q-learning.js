@@ -1,12 +1,12 @@
 var config = {
     canvas: {
         id: 'canvas',
-        width: 300,
-        height: 300
+        width: 400,
+        height: 400
     },
     matrix: {
-        height: 15,
-        width: 15
+        height: 20,
+        width: 20
     },
     color: {
         empty: 'white',
@@ -19,7 +19,7 @@ var config = {
         moveToEmpty: -1, //reward of moving to am empty cell
         stay: 0 //reward of staying in the same cell and nothing happens
     },
-    density: 0.3,
+    density: 0.5,
     exploration: 0.2,
     scoreId: 'score'
 };
@@ -55,12 +55,19 @@ GameBoard.prototype.updateAgent = function (agent) {
     this.matrix[x][y] = agent;
 };
 
+GameBoard.prototype.updateCitizens = function () {
+    for (var i = 0; i < this.citizens.length; i++) {
+        this.updateAgent(this.citizens[i]);
+    }
+};
+
 GameBoard.prototype.clear = function () {
     var context = this.canvasContext;
     context.clearRect(0, 0, config.canvas.width, config.canvas.height);
 };
 
 GameBoard.prototype.draw = function () {
+    this.clear();
     var dx = config.canvas.width / config.matrix.width;
     var dy = config.canvas.height / config.matrix.height;
     var radius = Math.min(dx, dy) / 2.5;
@@ -70,6 +77,7 @@ GameBoard.prototype.draw = function () {
     for (var column = 0; column < this.matrix.length; column++) {
         for (var line = 0; line < this.matrix[0].length; line++) {
             var agent = this.matrix[column][line];
+            //if (agent) console.log(agent.mark);
             var color = agent ? config.color[agent.mark] : config.color.empty;
             context.beginPath();
             context.arc(dx * (column + 0.5), dy * (line + 0.5), radius, 0, pi2, false);
@@ -83,11 +91,11 @@ GameBoard.prototype.draw = function () {
 };
 
 
-function Intruder(config) {
+function Intruder() {
     this.mark = 'intruder';
 }
 
-function Citizen(config) {
+function Citizen() {
     this.mark = 'citizen';
 }
 
@@ -95,7 +103,7 @@ function Citizen(config) {
  * functions to set position, for citizens and intruder
  */
 Intruder.prototype.setPosition = Citizen.prototype.setPosition = function (x, y) {
-    this.previousPosition = this.position;
+    this.previousPosition = this.position && {x: this.position.x, y: this.position.y};
     if (!this.position) this.position = {};
     this.position.x = x;
     this.position.y = y;
@@ -107,12 +115,14 @@ Intruder.prototype.setPosition = Citizen.prototype.setPosition = function (x, y)
  * @param time
  */
 Intruder.prototype.move = function (matrix, time) {
+    //console.log(time);
     var cols = matrix.length;
     var rows = matrix[0].length;
-    var v = 0.1;
-    var x = ~~(cols * 0.5 * (Math.sin(2 * v * time) + 1));
-    var y = ~~(rows * 0.5 * (Math.cos(v * time) + 1));
+    var v = 0.03;
+    var x = ~~(cols * 0.5 * (Math.sin(2 * v * time) + 1)) % cols;
+    var y = ~~(rows * 0.5 * (Math.sin(v * time) + 1)) % rows;
     this.setPosition(x, y);
+    //console.log(matrix);
 };
 
 
@@ -122,16 +132,18 @@ GameBoard.prototype.fillBoard = function () {
     for (var column = 0; column < this.matrix.length; column++) {
         for (var line = 0; line < this.matrix[0].length; line++) {
             if (Math.random() < config.density) {
-                var citizen = new Citizen(config);
+                var citizen = new Citizen();
                 citizen.setPosition(column, line);
                 this.citizens.push(citizen);
                 this.matrix[column][line] = citizen;
             }
         }
     }
-    this.intruder = new Intruder(config);
+    this.intruder = new Intruder();
     this.intruder.move(this.matrix, this.time);
-
+    this.matrix[this.intruder.position.x][this.intruder.position.y] = this.intruder;
+    //console.log(this.intruder.position.x, this.intruder.position.y);
+    //console.log( this.matrix[this.intruder.position.x][this.intruder.position.y]);
 };
 
 
@@ -154,6 +166,25 @@ Citizen.prototype.currentStateString = function (matrix) {
     return this.currentState(matrix).join('');
 };
 
+Citizen.prototype.randomAction = function () {
+    return {
+        dx: ~~(3 * Math.random() - 1),
+        dy: ~~(3 * Math.random() - 1)
+    }
+};
+
+Citizen.prototype.actionString = function (action) {
+    return JSON.stringify(action);
+};
+
+Citizen.prototype.applyAction = function (actionString) {
+    var action = JSON.parse(actionString);
+    var x = (this.position.x + action.dx) % config.matrix.width;
+    var y = this.position.y + action.dy % config.matrix.height;
+    this.setPosition(x,y);
+};
+
+
 GameBoard.prototype.objectAt = function (column, line) {
     return this.matrix[column][line];
 };
@@ -171,8 +202,15 @@ game.draw();
 
 var learner = new QLearner();
 
-var sid;
-//= setInterval(step, 500);
+var sid = setInterval(test, 100);
+
+function test() {
+    game.time++;
+    game.intruder.move(game.matrix, game.time);
+    game.updateCitizens();
+    game.updateAgent(game.intruder);
+    game.draw();
+}
 
 function slow() {
     clearInterval(sid);
@@ -182,6 +220,21 @@ function slow() {
 function fast() {
     clearInterval(sid);
     sid = setInterval(step, 20);
+}
+
+function moveAgents() {
+    for (var i = 0; i < game.citizens.length; i++) {
+        var citizen = game.citizens[i];
+        var state = citizen.currentStateString();
+        var action = learner.bestAction(state);
+        var randomAction = citizen.actionString(citizen.randomAction());
+
+        if (action === null || action === undefined || (!learner.knowsAction(state, randomAction) && (Math.random() < config.exploration))) {
+            action = randomAction;
+        }
+
+        citizen.applyAction(action);
+    }
 }
 
 function step() {
