@@ -138,8 +138,8 @@ function step() {
     var summary = "<br />Success: " + success;
     summary += "<br />Fail: " + Fail;
     summary += "<br>Success Rate: " + Math.round(100 * success / (success + Fail)) + "%";
-    summary += "<br />Continous Points: " + taps;
-    summary += "<br />Maximum Continous Points: " + maxtaps;
+    summary += "<br />Continuous Points: " + taps;
+    summary += "<br />Maximum Continuous Points: " + maxtaps;
     document.getElementById('score').innerHTML = summary;
 }
 function graph(success, Fail) {
