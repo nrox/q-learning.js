@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>q-learning.js test 2</title>
+    <meta name="description" content="Q-learning algorithm implementation and example in Javascript">
+    <meta name="keywords" content="Q-Learning, javascript, game">
+    <style>
+        body {
+            font-family: monospace;
+            font-size: 120%;
+            padding: 5%;
+        }
+        canvas {
+            border: 2px solid black;
+            margin: 1% auto 1% auto;
+            display: block;
+        }
+        #buttons {
+            width: 300px;
+            margin: auto;
+            display: block;
+        }
+
+        #buttons * {
+            width: 25%;
+        }
+
+        #score {
+            text-align: right;
+        }
+    </style>
+    <script src="q-learning.js"></script>
+</head>
+<body>
+<p>
+    <a href="https://github.com/nrox/q-learning.js">GitHub repo</a>
+</p>
+
+<p>
+    This could be used in a game, to train agents to have a particular behavior.
+    In this case, the green points are all ruled by the same state machine, and
+    we want to improve their behavior. The red point is an agent which should be avoided.
+    The green points can move only to empty spaces. The actions are therefore either to move to an empty space or to stay.
+    The red point moves according to a predefined periodic path.
+</p>
+
+<canvas id="canvas" width="400px" height="400px"></canvas>
+<div id="buttons">
+    <button onclick="slow()">slow</button>
+    <button onclick="fast()">fast</button>
+    <span id="score"></span>
+</div>
+
+<script src="example3.js"></script>
+</body>
+</html>
