@@ -13,12 +13,13 @@ This algorithm is suitable to search, path finding, control, as it retains in me
 Demo
 -----
 
-[Example 1: basic](http://nrox.github.io/q-learning.js/test1.html)
+[Example 1: basic](http://nrox.github.io/q-learning.js/example1.html)
 
-[Example 2: game agent1](http://nrox.github.io/q-learning.js/test2.html)
+[Example 2: game agent](http://nrox.github.io/q-learning.js/example2.html)
 
-[Example 3: game agent2](https://pratheeswaran.github.io/q-learning.js/test3.html)
+[Example 3: learning to keep distance](http://nrox.github.io/q-learning.js/example3.html)
 
+[Example 3: learning to keep distance](https://pratheeswaran.github.io/q-learning.js/example4.html)
 
 Usage Example
 =======
@@ -80,5 +81,4 @@ or run it until it stays in the same state, or solution.
         current = learner.getState();
         learner.runOnce();
     }
-
 
