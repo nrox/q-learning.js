@@ -19,6 +19,7 @@ Demo
 
 [Example 3: learning to keep distance](http://nrox.github.io/q-learning.js/example3.html)
 
+[Example 4: brick breaker](https://pratheeswaran.github.io/q-learning.js/example4.html)
 
 Usage Example
 =======
@@ -80,5 +81,4 @@ or run it until it stays in the same state, or solution.
         current = learner.getState();
         learner.runOnce();
     }
-
 
