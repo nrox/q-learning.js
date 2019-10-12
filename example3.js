@@ -202,7 +202,7 @@ game.draw();
 
 var learner = new QLearner();
 
-var sid = setInterval(test, 100);
+var sid = setInterval(test, 500);
 
 function test() {
     game.time++;
@@ -214,12 +214,12 @@ function test() {
 
 function slow() {
     clearInterval(sid);
-    sid = setInterval(step, 500);
+    sid = setInterval(test, 500);
 }
 
 function fast() {
     clearInterval(sid);
-    sid = setInterval(step, 20);
+    sid = setInterval(test, 50);
 }
 
 function moveAgents() {

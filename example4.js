@@ -164,3 +164,13 @@ function graph(success, Fail) {
     }
     lastplot = plot;
 }
+
+function slow() {
+    clearInterval(sid);
+    sid = setInterval(step, 50);
+}
+
+function fast() {
+    clearInterval(sid);
+    sid = setInterval(step, 1);
+}
