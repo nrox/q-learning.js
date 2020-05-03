@@ -45,7 +45,7 @@ describe("Food/Poison", () => {
             set.add(board.getState())
         }
         expect(set.size>2).toBe(true)
-        expect(set.has("S000000000")).toBe(true)
+        expect(set.has("S000000")).toBe(true)
     })
             
     it("Board.addMoreFood", () => {
