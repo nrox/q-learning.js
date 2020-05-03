@@ -1,4 +1,5 @@
 
+
 class Agent {
     constructor(row, column){
         this.row = row
@@ -63,13 +64,13 @@ class Score {
 }
 
 class Board {
-    constructor(){
-        this.numColumns = 10; 
-        this.numRows = 10; 
-        this.board = [];
-        this.foodPoisonRatio = 0.5;
-        this.density = 0.1;
-        this.exploration = 0.2;
+    constructor(numRows, numColumns, density, foodPoisonRatio){
+        this.numRows = numRows || 10;
+        this.numColumns = numColumns || 10
+        this.board = []
+        this.foodPoisonRatio = foodPoisonRatio === undefined ? 0.5 : foodPoisonRatio
+        this.density = density === undefined ? 0.1 : density
+        this.exploration = 0.2
     }
 
     /**
@@ -111,7 +112,7 @@ class Board {
     addMoreFood(){
         for (var col = 0; col < this.numColumns; col++){
             let agentType
-            if (Math.random()<this.density){
+            if (Math.random()<=this.density){
                 agentType = Math.random() < this.foodPoisonRatio ? Food : Poison
             } else {
                 agentType = Empty
@@ -157,7 +158,7 @@ class CanvasPainter {
         this.canvasContext = undefined
         this.dx = this.canvasWidth/this.board.numColumns;
         this.dy = this.canvasHeight/this.board.numRows;
-        this.radius = Math.min(dx, dy)/2.5;
+        this.radius = Math.min(this.dx, this.dy)/2.5;
         this.pi2 = Math.PI * 2;
     }
     init(){
@@ -175,17 +176,14 @@ class CanvasPainter {
         ctx.stroke();
     }
     draw(fps, duration){
-        var dx = this.canvasWidth/this.board.numColumns;
-        var dy = this.canvasHeight/this.board.numRows;
-        var radius = Math.min(dx, dy)/2.5;
-        var pi2 = Math.PI * 2;
         var context = this.canvasContext;
         context.clearRect ( 0 , 0 , this.canvasWidth , this.canvasHeight);
     
-        for (var line = 0; line < this.board.numRows; line++){
-            for (var column = 0; column < this.board.numColumns; column++){
-                let agent = this.board.getAgent(line, column)
-                if (agent.type==0) continue;
+        for (var row = 0; row < this.board.numRows; row++){
+            for (var col = 0; col < this.board.numColumns; col++){
+                let agent = this.board.getAgent(row, col)
+                console.log(agent)
+                if (agent instanceof Empty) continue;
                 this.drawAgent(agent)
             }
         }
