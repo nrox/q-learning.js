@@ -19,8 +19,6 @@ Demo
 
 [Example 3: Learning to keep distance](examples/keep-distance/index.html)
 
-[Example 4: Brick Breaker](examples/brick-breaker/index.html)
-
 Usage
 =======
 
