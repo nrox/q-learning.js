@@ -46,17 +46,21 @@
 <script type="text/javascript" src="index.js"></script>
 <script type="text/javascript">
     const controller = new Controller();
+    var stepTime = 500
     function stepController(){
         controller.step()
+        controller.draw(0.9*stepTime)
     }
-    var sid = setInterval(stepController, 500);
+    var sid = setInterval(stepController, stepTime);
     function slow(){
         clearInterval(sid);
-        sid = setInterval(stepController, 500);
+        stepTime = 500
+        sid = setInterval(stepController, stepTime);
     }
     function fast(){
         clearInterval(sid);
-        sid = setInterval(stepController, 20);
+        stepTime = 20
+        sid = setInterval(stepController, stepTime);
     }
 </script>
 </body>

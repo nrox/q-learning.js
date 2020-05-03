@@ -166,32 +166,55 @@ class CanvasPainter {
         this.dy = this.canvasHeight/this.board.numRows;
         this.radius = Math.min(this.dx, this.dy)/2.5;
         this.pi2 = Math.PI * 2;
+        this.fps = 60
     }
     init(){
         var canvas = document.getElementById(this.canvasId)
         this.canvasContext = canvas.getContext('2d')
     }
-    drawAgent(agent){
+    drawAgent(agent, progress){
+        if (progress===undefined) progress = 1.0
         let ctx = this.canvasContext
+        let col = agent.col * progress + agent.lastCol * (1-progress)
+        let row = agent.row * progress + agent.lastRow * (1-progress)
         ctx.beginPath();
-        ctx.arc(this.dx * (agent.col + 0.5), this.dy * (agent.row + 0.5), this.radius, 0, this.pi2, false);
+        ctx.arc(this.dx * (col + 0.5), this.dy * (row + 0.5), this.radius, 0, this.pi2, false);
         ctx.fillStyle = agent.color;
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#333333';
         ctx.stroke();
     }
-    draw(fps, duration){
-        var ctx = this.canvasContext;
-        ctx.clearRect ( 0 , 0 , this.canvasWidth , this.canvasHeight);
-        for (var row = 0; row < this.board.numRows; row++){
-            for (var col = 0; col < this.board.numColumns; col++){
-                let agent = this.board.getAgent(row, col)
-                if (agent instanceof Empty) continue;
-                this.drawAgent(agent)
+    /**
+     * 
+     * @param {*} duration transition time
+     */
+    draw(duration){
+        const ctx = this.canvasContext
+        const self = this
+        const board = this.board
+        let progress = 0
+        const frames = this.fps * duration/1000.0
+        const dt = Math.round(1000.0/this.fps)
+        let frameCount = 0.0
+
+        drawProgress()
+
+        function drawProgress(){
+            progress = frameCount/frames
+            ctx.clearRect ( 0 , 0 , self.canvasWidth , self.canvasHeight);
+            for (var row = 0; row < board.numRows; row++){
+                for (var col = 0; col < board.numColumns; col++){
+                    let agent = board.getAgent(row, col)
+                    if (agent instanceof Empty) continue;
+                    self.drawAgent(agent, progress)
+                }
+            }
+            self.drawAgent(board.hero, progress)
+            if (frameCount++<frames){
+                setTimeout(drawProgress, dt)
             }
         }
-        this.drawAgent(this.board.hero)
     }
 }
 
@@ -206,6 +229,9 @@ class Controller {
         this.learner = new QLearner(0.2, 0.5)
     }
 
+    draw(duration){
+        this.painter.draw(duration)
+    }
     step(){
         
         const board = this.board
@@ -222,6 +248,7 @@ class Controller {
         let action = learner.bestAction(currentState);
 
         //if there is no best action try to explore
+        //FIXME: account for negative events
         if (action===null || action === undefined || (!learner.knowsAction(currentState, randomAction) && Math.random()<this.exploration)){
             action = randomAction;
         }
@@ -244,8 +271,6 @@ class Controller {
         learner.learn(10);
 
         board.addMoreFood()
-
-        this.painter.draw()
 
         /*
         //some feedback on performance

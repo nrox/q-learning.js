@@ -89,7 +89,7 @@ describe("Food/Poison", () => {
         }
         let painter = new CanvasPainter(board)
         painter.init()
-        painter.draw()
+        painter.draw(1000)
     })
 
     it("...", () => {
