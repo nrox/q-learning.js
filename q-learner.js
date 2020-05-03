@@ -1,6 +1,23 @@
 "use strict";
 
-const generateRandom = new Math.seedrandom()
+/*
+ * https://en.wikipedia.org/wiki/Q-learning
+ * http://mnemstudio.org/path-finding-q-learning-tutorial.htm
+ */
+
+class RandomGenerator {
+    constructor(seed){
+        this.generator = new Math.seedrandom(seed || '.')
+    }
+    random(){
+        return this.generator()
+    }
+    setSeed(seed){
+        this.generator = new Math.seedrandom(seed)
+    }
+}
+
+const generator = new RandomGenerator
 
 class Action {
     constructor(nextState, reward, name){
@@ -23,7 +40,7 @@ class State {
         return action
     }
     randomAction = () => {
-        let index = Math.floor(this.actionsList.length * generateRandom())
+        let index = Math.floor(this.actionsList.length * generator.random())
         return this.actionsList[index]
     }
 }
@@ -31,6 +48,7 @@ class State {
 class QLearner {
 
     /**
+     * https://en.wikipedia.org/wiki/Q-learning
      * 
      * @param {number} gamma The discount factor 
      * @param {number} alpha The learning rate 
@@ -38,6 +56,8 @@ class QLearner {
     constructor(gamma, alpha){
         this.gamma = gamma || 0.8
         this.alpha = alpha || 0.8
+
+        //qValuesTable is a map {state#: {action#: q-value, ...}, ...}
         this.qValuesTable = {}
         this.states = {}
         this.statesList = []
@@ -50,7 +70,7 @@ class QLearner {
     add(from, to, reward, actionName){
         if (!this.states[from]) this.addState(from)
         if (!this.states[to]) this.addState(to)
-        this.setReward(from, actionName, reward)
+        this.setQValue(from, actionName, reward)
         return this.states[from].addAction(to, reward, actionName)
     }
     addState(name){
@@ -67,12 +87,12 @@ class QLearner {
         return this.currentState && this.currentState.name
     }
     randomState(){
-        let index = Math.floor(this.statesList.length * generateRandom())
+        let index = Math.floor(this.statesList.length * generator.random())
         return this.statesList[index]
     }
 
     /**
-     * The maximum reward achievable from the state, by looking at the rewards table.
+     * The maximum reward achievable from the state, by looking at the q-values table.
      */
     optimalFutureValue(state){
         let qValues = this.qValuesTable[state]
@@ -104,7 +124,7 @@ class QLearner {
     }
 
     /**
-     * Get the best action from the state (name), which is the one with immediate best reward.
+     * Get the best action from the state (name), which is the one with immediate best Q-value.
      * During the selection process, if states have the same reward, choose one with probability 50%.
      */
     bestAction(state){
@@ -114,7 +134,7 @@ class QLearner {
             if (qValues.hasOwnProperty(action)){
                 if (!bestAction){
                     bestAction = action
-                } else if ((qValues[action] == qValues[bestAction]) && (generateRandom()>0.5)){
+                } else if ((qValues[action] == qValues[bestAction]) && (generator.random()>0.5)){
                     bestAction = action
                 } else if (qValues[action] > qValues[bestAction]){
                     bestAction = action
@@ -141,33 +161,47 @@ class QLearner {
     /**
      * Set a reward (Q-Value) for performing the action from a state
      */
-    setReward(stateName, actionName, reward){
+    setQValue(stateName, actionName, reward){
         if(!this.qValuesTable[stateName]) this.qValuesTable[stateName] = {}
         this.qValuesTable[stateName][actionName] = reward
+    }
+
+    getQValue(stateName, actionName){
+        if(!this.qValuesTable[stateName]) return 0.0
+        return this.qValuesTable[stateName][actionName] || 0.0
     }
 
     /**
      * Do a single learning step from current state.
      */
     step(){
+
         //set current state randomly if not defined
         if(!this.currentState) this.currentState = this.randomState()
         if (!this.currentState) return null;        
         let state = this.currentState
 
-        //get some action from current state
+        //get some random action from current state
         let action = state.randomAction();
         if (!action) return null;
 
-        //rewards is a map {state#: {action#: reward, ...}, ...}
-        let reward = (action.reward || 0) + this.gamma * this.optimalFutureValue(action.nextState)
-        this.setReward(state.name,action.name, reward)
+        //immediate reward for the action
+        let actionReward = action.reward || 0
+
+        //optimal future value, by looking at the q-values table, for the 
+        let maxQValue = this.optimalFutureValue(action.nextState)
+        let oldQValue = this.getQValue(state.name, action.name)
+        let newQValue = (1 - this.alpha) * oldQValue + this.alpha * (actionReward + this.gamma * maxQValue)
+
+        //update q-values table
+        this.setQValue(state.name,action.name, newQValue)
+
         this.currentState = this.states[action.nextState]
         return this.currentState
     }
 
     /**
-     * From the current state, apply the learning process #steps
+     * Apply the learning process #steps, from random states.
      */
     learn(steps){
         steps = Math.max(1, steps || 0)
