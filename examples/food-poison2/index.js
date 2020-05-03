@@ -75,7 +75,7 @@ class Board {
         this.numColumns = numColumns || 10
         this.board = []
         this.foodPoisonRatio = foodPoisonRatio === undefined ? 0.5 : foodPoisonRatio
-        this.density = density === undefined ? 0.1 : density
+        this.density = density === undefined ? 0.2 : density
         this.exploration = 0.2
     }
 
@@ -142,10 +142,10 @@ class Board {
     getState(){
         let state = "S";
         for (var dCol = -1; dCol <= 1 ; dCol++){
-            for (var dRow = -3; dRow < 0 ; dRow++){
-                let row = (this.hero.row + dRow + this.numRows) % this.numRows;
-                let col = (this.hero.col + dCol + this.numColumns) % this.numColumns;
-                state += this.getAgent(row, col).type;
+            for (var dRow = -2; dRow < 0 ; dRow++){
+                let row = (this.hero.row + dRow + this.numRows) % this.numRows
+                let col = (this.hero.col + dCol + this.numColumns) % this.numColumns
+                state += this.getAgent(row, col).type
             }
         }
         return state;
@@ -175,15 +175,34 @@ class CanvasPainter {
     drawAgent(agent, progress){
         if (progress===undefined) progress = 1.0
         let ctx = this.canvasContext
-        let col = agent.col * progress + agent.lastCol * (1-progress)
-        let row = agent.row * progress + agent.lastRow * (1-progress)
+        let col = agent._col * progress + agent._lastCol * (1-progress)
+        let row = agent._row * progress + agent._lastRow * (1-progress)
         ctx.beginPath();
-        ctx.arc(this.dx * (col + 0.5), this.dy * (row + 0.5), this.radius, 0, this.pi2, false);
+        const x = Math.round(this.dx * (col + 0.5))
+        const y = Math.round(this.dy * (row + 0.5))
+        ctx.arc(x, y, this.radius, 0, this.pi2, false);
         ctx.fillStyle = agent.color;
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#333333';
         ctx.stroke();
+    }
+    markForDrawing(agent){
+        agent._row = agent.row
+        agent._col = agent.col
+        agent._lastRow = agent.lastRow
+        agent._lastCol = agent.lastCol
+    }
+    markAllForDrawing(){
+        let board = this.board
+        for (var row = 0; row < board.numRows; row++){
+            for (var col = 0; col < board.numColumns; col++){
+                let agent = board.getAgent(row, col)
+                if (agent instanceof Empty) continue;
+                this.markForDrawing(agent)
+            }
+        }
+        this.markForDrawing(board.hero)
     }
     /**
      * 
@@ -197,7 +216,8 @@ class CanvasPainter {
         const frames = this.fps * duration/1000.0
         const dt = Math.round(1000.0/this.fps)
         let frameCount = 0.0
-
+        
+        this.markAllForDrawing()
         drawProgress()
 
         function drawProgress(){
@@ -220,13 +240,13 @@ class CanvasPainter {
 
 class Controller {
     constructor(){
-        this.exploration = 0.1
+        this.exploration = 0.01
         let board = new Board
         board.init()
         this.board = board
         this.painter = new CanvasPainter(board)
         this.painter.init()
-        this.learner = new QLearner(0.2, 0.5)
+        this.learner = new QLearner(0.1, 0.9)
     }
 
     draw(duration){
@@ -241,20 +261,25 @@ class Controller {
         //memorize current state
         const currentState = board.getState()
 
-        //get some action
-        const randomAction = hero.randomAction();
-
         //and the best action
         let action = learner.bestAction(currentState);
 
         //if there is no best action try to explore
-        //FIXME: account for negative events
-        if (action===null || action === undefined || (!learner.knowsAction(currentState, randomAction) && Math.random()<this.exploration)){
-            action = randomAction;
+        if ((action==undefined) || (learner.getQValue(currentState, action) <= 0) || (Math.random()<this.exploration)) {
+            action = hero.randomAction()
         }
+
         //action is a number -1,0,+1
-        action = Number(action);
-        
+        action = Number(action)
+
+        //avoid going over borders
+        if ((hero.col + action) < 0) {
+            action = Math.max(0, action)
+        }
+        if ((hero.col + action) >= board.numColumns) {
+            action = Math.min(0, action)
+        }
+
         //apply the action
         board.setPosition(hero, hero.row, (hero.col + action + board.numColumns) % board.numColumns);
         
@@ -265,12 +290,13 @@ class Controller {
         const reward = collidedWith.reward;
 
         const nextState = board.getState();
-        learner.add(currentState, nextState, reward, "" + action);
+        learner.add(currentState, nextState, reward, action);
 
         //make que q-learning algorithm number of iterations=10 or it could be another number
-        learner.learn(10);
+        learner.learn(100);
 
         board.addMoreFood()
+        board.currentState = nextState
 
         /*
         //some feedback on performance
