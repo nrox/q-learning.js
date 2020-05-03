@@ -15,7 +15,7 @@ Demo
 
 [Example 1: Basic](examples/basic/index.html)
 
-[Example 2: Caching food and avoiding poison](examples/food-poison/index.html)
+[Example 2: Caching food and avoiding poison](examples/food-poison2/index.html)
 
 [Example 3: Learning to keep distance](examples/keep-distance/index.html)
 
