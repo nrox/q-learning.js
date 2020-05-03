@@ -32,11 +32,13 @@ class QLearner {
 
     /**
      * 
-     * @param {number} gamma The learning rate 
+     * @param {number} gamma The discount factor 
+     * @param {number} alpha The learning rate 
      */
-    constructor(gamma){
+    constructor(gamma, alpha){
         this.gamma = gamma || 0.8
-        this.rewards = {}
+        this.alpha = alpha || 0.8
+        this.qValuesTable = {}
         this.states = {}
         this.statesList = []
         this.currentState = null
@@ -73,11 +75,11 @@ class QLearner {
      * The maximum reward achievable from the state, by looking at the rewards table.
      */
     optimalFutureValue(state){
-        let stateRewards = this.rewards[state]
+        let qValues = this.qValuesTable[state]
         let max = 0
-        for (let action in stateRewards){
-            if (stateRewards.hasOwnProperty(action)){
-                max = Math.max(max, stateRewards[action] || 0)
+        for (let action in qValues){
+            if (qValues.hasOwnProperty(action)){
+                max = Math.max(max, qValues[action] || 0)
             }
         }
         return max;
@@ -87,7 +89,7 @@ class QLearner {
      * If there are defined rewards for the action, from the state.
      */
     knowsAction(state, action){
-        return (this.rewards[state] || {}).hasOwnProperty(action)
+        return (this.qValuesTable[state] || {}).hasOwnProperty(action)
     }
 
     /**
@@ -106,15 +108,15 @@ class QLearner {
      * During the selection process, if states have the same reward, choose one with probability 50%.
      */
     bestAction(state){
-        let stateRewards = this.rewards[state] || {}
+        let qValues = this.qValuesTable[state] || {}
         let bestAction = null;
-        for (let action in stateRewards){
-            if (stateRewards.hasOwnProperty(action)){
+        for (let action in qValues){
+            if (qValues.hasOwnProperty(action)){
                 if (!bestAction){
                     bestAction = action
-                } else if ((stateRewards[action] == stateRewards[bestAction]) && (generateRandom()>0.5)){
+                } else if ((qValues[action] == qValues[bestAction]) && (generateRandom()>0.5)){
                     bestAction = action
-                } else if (stateRewards[action] > stateRewards[bestAction]){
+                } else if (qValues[action] > qValues[bestAction]){
                     bestAction = action
                 }
             }
@@ -137,11 +139,11 @@ class QLearner {
     }
 
     /**
-     * Set a reward for performing the action from a state
+     * Set a reward (Q-Value) for performing the action from a state
      */
     setReward(stateName, actionName, reward){
-        if(!this.rewards[stateName]) this.rewards[stateName] = {}
-        this.rewards[stateName][actionName] = reward
+        if(!this.qValuesTable[stateName]) this.qValuesTable[stateName] = {}
+        this.qValuesTable[stateName][actionName] = reward
     }
 
     /**
