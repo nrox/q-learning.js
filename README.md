@@ -13,15 +13,15 @@ This algorithm is suitable to search, path finding, control, as it retains in me
 Demo
 -----
 
-[Example 1: basic](http://nrox.github.io/q-learning.js/example1.html)
+[Example 1: Basic](examples/basic/index.html)
 
-[Example 2: game agent](http://nrox.github.io/q-learning.js/example2.html)
+[Example 2: Caching food and avoiding poison](examples/food-poison/index.html)
 
-[Example 3: learning to keep distance](http://nrox.github.io/q-learning.js/example3.html)
+[Example 3: Learning to keep distance](examples/keep-distance/index.html)
 
-[Example 4: brick breaker](https://nrox.github.io/q-learning.js/example4.html)
+[Example 4: Brick Breaker](examples/brick-breaker/index.html)
 
-Usage Example
+Usage
 =======
 
 Learning

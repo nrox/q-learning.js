@@ -1,0 +1,47 @@
+
+body {
+    font-family: monospace;
+    font-size: 120%;
+    padding: 5%;
+}
+
+canvas {
+    border: 2px solid black;
+    width: 300px;
+    margin: 1% auto 1% auto;
+    display: block;
+    background: #eee;
+}
+
+#buttons {
+    width: 300px;
+    margin: auto;
+    display: block;
+}
+
+#buttons * {
+    width: 25%;
+}
+
+#score {
+    text-align: right;
+}
+
+.state {
+    font-size: 25px;
+    float: left;
+    border-radius: 25px;
+    width: 20px;
+    height: 20px;
+    border: 3px solid black;
+    padding: 10px;
+    margin: 2px;
+    cursor: pointer;
+}
+
+.middle {
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
