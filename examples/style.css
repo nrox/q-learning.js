@@ -5,22 +5,25 @@ body {
     padding: 5%;
 }
 
-canvas {
+p {
+    max-width: 30em;
+}
+#canvas {
     border: 2px solid black;
     width: 300px;
-    margin: 1% auto 1% auto;
+    margin: 1% auto 1% 1%;
     display: block;
     background: #eee;
 }
 
-#buttons {
-    width: 300px;
-    margin: auto;
-    display: block;
-}
-
 #buttons * {
     width: 25%;
+}
+
+#buttons {
+    width: 300px;
+    margin: 1% auto 1% 1%;
+    display: block;
 }
 
 #score {

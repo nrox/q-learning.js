@@ -26,8 +26,7 @@ describe("Food/Poison", () => {
         let poison = new Poison(2, 4)
         expect(poison.type).toBe(3)
     })
-
-        
+  
     it("Board.init", () => {
         let board = new Board(11, 12)
         board.init()
@@ -36,6 +35,18 @@ describe("Food/Poison", () => {
         expect(board.hero).not.toBe(undefined)
     })
 
+    it("Board.getState", () => {
+        let board = new Board(11, 12)
+        board.init()
+        let set = new Set
+        for (let i = 0; i < 1000; i++){
+            board.addMoreFood()
+            board.moveFoodDown()
+            set.add(board.getState())
+        }
+        expect(set.size>2).toBe(true)
+        expect(set.has("S000000000")).toBe(true)
+    })
             
     it("Board.addMoreFood", () => {
         let density = 1.0
@@ -50,7 +61,6 @@ describe("Food/Poison", () => {
         board = new Board(10, 10, density, 0.5)
         board.init()
         board.addMoreFood()
-        console.log(board.board)
         for (let c = 0; c < 10; c++){
             expect(board.board[0][c] instanceof Empty).toBe(true)
         }

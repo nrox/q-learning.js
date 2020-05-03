@@ -24,6 +24,12 @@ class Agent {
         this.lastRow = this.row
         this.row = row
     }
+    randomAction(){
+        let rand = Math.random()
+        if (rand<0.33) return -1
+        if (rand<0.67) return 0
+        return 1
+    }
 }
 
 class Food extends Agent {
@@ -133,7 +139,7 @@ class Board {
     /**
      * get a string representation of the objects in the 3x3 square in front of the agent
      */
-    currentState(){
+    getState(){
         let state = "S";
         for (var dCol = -1; dCol <= 1 ; dCol++){
             for (var dRow = -3; dRow < 0 ; dRow++){
@@ -176,87 +182,79 @@ class CanvasPainter {
         ctx.stroke();
     }
     draw(fps, duration){
-        var context = this.canvasContext;
-        context.clearRect ( 0 , 0 , this.canvasWidth , this.canvasHeight);
-    
+        var ctx = this.canvasContext;
+        ctx.clearRect ( 0 , 0 , this.canvasWidth , this.canvasHeight);
         for (var row = 0; row < this.board.numRows; row++){
             for (var col = 0; col < this.board.numColumns; col++){
                 let agent = this.board.getAgent(row, col)
-                console.log(agent)
                 if (agent instanceof Empty) continue;
                 this.drawAgent(agent)
             }
         }
+        this.drawAgent(this.board.hero)
+    }
+}
+
+class Controller {
+    constructor(){
+        this.exploration = 0.1
+        let board = new Board
+        board.init()
+        this.board = board
+        this.painter = new CanvasPainter(board)
+        this.painter.init()
+        this.learner = new QLearner(0.2, 0.5)
     }
 
-}
+    step(){
+        
+        const board = this.board
+        const learner = this.learner
+        const hero = board.hero
 
+        //memorize current state
+        const currentState = board.getState()
 
-var game = new Board();
+        //get some action
+        const randomAction = hero.randomAction();
 
-var learner = new QLearner(0.2, 0.5);
+        //and the best action
+        let action = learner.bestAction(currentState);
 
-var sid = setInterval(step, 500);
+        //if there is no best action try to explore
+        if (action===null || action === undefined || (!learner.knowsAction(currentState, randomAction) && Math.random()<this.exploration)){
+            action = randomAction;
+        }
+        //action is a number -1,0,+1
+        action = Number(action);
+        
+        //apply the action
+        board.setPosition(hero, hero.row, (hero.col + action + board.numColumns) % board.numColumns);
+        
+        //get next state, compute reward
+        board.moveFoodDown();
 
-function slow(){
-    clearInterval(sid);
-    sid = setInterval(step, 500);
-}
+        const collidedWith = board.getAgent(hero.row, hero.col)
+        const reward = collidedWith.reward;
 
-function fast(){
-    clearInterval(sid);
-    sid = setInterval(step, 20);
-}
+        const nextState = board.getState();
+        learner.add(currentState, nextState, reward, "" + action);
 
-function init(){
+        //make que q-learning algorithm number of iterations=10 or it could be another number
+        learner.learn(10);
 
-}
+        board.addMoreFood()
 
-function step(){
+        this.painter.draw()
 
-}
-
-function stepBack(){
-    //memorize current state
-
-    var currentState = game.currentState();
-    //get some action
-    var randomAction = game.randomAction();
-    //and the best action
-    var action = learner.bestAction(currentState);
-    //if there is no best action try to explore
-    if (action===null || action === undefined || (!learner.knowsAction(currentState, randomAction) && Math.random()<game.exploration)){
-        action = randomAction;
+        /*
+        //some feedback on performance
+        game.score[collidedWith]++;
+        var summary = "<br />green==food: " + game.score[game.food];
+        summary += "<br />gray=poison: " + game.score[game.poison];
+        summary += "<br />poison/food: " + Math.round(100*game.score[game.poison]/game.score[game.food]) + "%";
+        document.getElementById(game.scoreId).innerHTML = summary;
+        game.draw();
+        */
     }
-    //action is a number -1,0,+1
-    action = Number(action);
-    //apply the action
-    game.setPosition(game.agentPosition.column + action);
-    //get next state, compute reward
-    game.moveObjectsDown();
-    var collidedWith = game.objectAt(game.agentPosition.column, game.agentPosition.line);
-    var reward = game.rewardDictionary[collidedWith];
-
-    var nextState = game.currentState();
-    learner.add(currentState, nextState, reward, action);
-
-    //make que q-learning algorithm number of iterations=10 or it could be another number
-    learner.learn(10);
-
-    game.addMoreObjects();
-
-    //some feedback on performance
-    game.score[collidedWith]++;
-    var summary = "<br />green==food: " + game.score[game.food];
-    summary += "<br />gray=poison: " + game.score[game.poison];
-    summary += "<br />poison/food: " + Math.round(100*game.score[game.poison]/game.score[game.food]) + "%";
-    document.getElementById(game.scoreId).innerHTML = summary;
-    game.draw();
 }
-
-
-
-
-
-
-
