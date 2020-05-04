@@ -1,13 +1,18 @@
 
 
 class Agent {
+    static heroType = 1
+    static emptyType = 0
+    static foodType = 2
+    static poisonType = 3
+
     constructor(row, column){
         this.row = row
         this.col = column
         this.lastCol = this.col
         this.lastRow = this.row
         this.color = 'black'
-        this.type = 1
+        this.type = this.heroType
         this.reward = 0
     }
     setPosition(row, col){
@@ -36,7 +41,7 @@ class Food extends Agent {
     constructor(row, column){
         super(row, column)
         this.color = 'green'
-        this.type = 2
+        this.type = Agent.foodType
         this.reward = 1
     }
 }
@@ -44,8 +49,8 @@ class Food extends Agent {
 class Poison extends Food {
     constructor(row, column){
         super(row, column)
-        this.color = 'yellow'
-        this.type = 3
+        this.color = 'gray'
+        this.type = Agent.poisonType
         this.reward = -1
     }
 }
@@ -54,18 +59,8 @@ class Empty extends Agent {
     constructor(row, column){
         super(row, column)
         this.color = 'white'
-        this.type = 0
+        this.type = Agent.emptyType
         this.reward = 0
-    }
-}
-
-class Score {
-    constructor(){
-        this.score = {};
-    }
-    update(agent){
-        if (this.score[agent.type]===undefined) this.score[agent.type] = 0 
-        this.score[agent.type]++
     }
 }
 
@@ -141,10 +136,14 @@ class Board {
      */
     getState(){
         let state = "S";
+        const heroRow = this.hero.row
+        const heroCol = this.hero.col
+        const numRows = this.numRows
+        const numCols = this.numColumns
         for (var dCol = -1; dCol <= 1 ; dCol++){
-            for (var dRow = -2; dRow < 0 ; dRow++){
-                let row = (this.hero.row + dRow + this.numRows) % this.numRows
-                let col = (this.hero.col + dCol + this.numColumns) % this.numColumns
+            for (var dRow = -3; dRow <= -1 ; dRow++){
+                let row = (heroRow + dRow + numRows) % numRows
+                let col = (heroCol + dCol + numCols) % numCols
                 state += this.getAgent(row, col).type
             }
         }
@@ -164,28 +163,13 @@ class CanvasPainter {
         this.canvasContext = undefined
         this.dx = this.canvasWidth/this.board.numColumns;
         this.dy = this.canvasHeight/this.board.numRows;
-        this.radius = Math.min(this.dx, this.dy)/2.5;
+        this.radius = Math.round(Math.min(this.dx, this.dy)/2.5);
         this.pi2 = Math.PI * 2;
         this.fps = 60
     }
     init(){
         var canvas = document.getElementById(this.canvasId)
         this.canvasContext = canvas.getContext('2d')
-    }
-    drawAgent(agent, progress){
-        if (progress===undefined) progress = 1.0
-        let ctx = this.canvasContext
-        let col = agent._col * progress + agent._lastCol * (1-progress)
-        let row = agent._row * progress + agent._lastRow * (1-progress)
-        ctx.beginPath();
-        const x = Math.round(this.dx * (col + 0.5))
-        const y = Math.round(this.dy * (row + 0.5))
-        ctx.arc(x, y, this.radius, 0, this.pi2, false);
-        ctx.fillStyle = agent.color;
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#333333';
-        ctx.stroke();
     }
     markForDrawing(agent){
         agent._row = agent.row
@@ -204,25 +188,53 @@ class CanvasPainter {
         }
         this.markForDrawing(board.hero)
     }
+    drawAgent(agent, progress){
+        if (progress===undefined) progress = 1.0
+        let ctx = this.canvasContext
+
+        //circular world
+        let _lastCol = agent._lastCol 
+        if (agent._col == 0 && agent._lastCol == (this.board.numColumns-1)){
+            _lastCol = -1
+        } else if (agent._col == (this.board.numColumns-1) && agent._lastCol ==0){
+            _lastCol = this.board.numColumns
+        }
+
+        //new objects
+        let _lastRow = agent._lastRow 
+        if (agent._row == 0 && agent._lastRow == 0){
+            _lastRow = -1
+        } 
+
+        let col = agent._col * progress + _lastCol * (1-progress)
+        let row = agent._row * progress + _lastRow * (1-progress)
+        ctx.beginPath();
+        const x = Math.round(this.dx * (col + 0.5))
+        const y = Math.round(this.dy * (row + 0.5))
+        ctx.arc(x, y, this.radius, 0, this.pi2, false);
+        ctx.fillStyle = agent.color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#333333';
+        ctx.stroke();
+    }
     /**
-     * 
-     * @param {*} duration transition time
+     * @param {long} duration transition time ms
      */
     draw(duration){
+        const startTime = new Date().getTime()
         const ctx = this.canvasContext
         const self = this
         const board = this.board
-        let progress = 0
-        const frames = this.fps * duration/1000.0
         const dt = Math.round(1000.0/this.fps)
-        let frameCount = 0.0
-        
         this.markAllForDrawing()
+
         drawProgress()
 
         function drawProgress(){
-            progress = frameCount/frames
-            ctx.clearRect ( 0 , 0 , self.canvasWidth , self.canvasHeight);
+            const elapsed =  new Date().getTime()-startTime
+            let progress = Math.min(1, elapsed/duration)
+            ctx.clearRect( 0 , 0 , self.canvasWidth , self.canvasHeight);
             for (var row = 0; row < board.numRows; row++){
                 for (var col = 0; col < board.numColumns; col++){
                     let agent = board.getAgent(row, col)
@@ -231,10 +243,33 @@ class CanvasPainter {
                 }
             }
             self.drawAgent(board.hero, progress)
-            if (frameCount++<frames){
+            if (progress < 1){
                 setTimeout(drawProgress, dt)
             }
         }
+    }
+}
+
+class Score {
+
+    constructor(){
+        this.table = {}
+        this.total = 0
+        this.elementId = "score"
+    }
+    update(agent){
+        if (agent instanceof Empty) return
+        if (this.table[agent.type]===undefined) this.table[agent.type] = 0 
+        this.table[agent.type]++
+        this.total++
+    }
+    show(){
+        const food = this.table[Agent.foodType] || 0
+        const poison = this.table[Agent.poisonType] || 0
+        let summary = "<br />green==food : " + food
+        summary +=    "<br />gray==poison: " + poison
+        summary +=    "<br />poison/total: " + Math.round(100*poison/(this.total||1)) + "%";
+        document.getElementById(this.elementId).innerHTML = summary
     }
 }
 
@@ -247,6 +282,7 @@ class Controller {
         this.painter = new CanvasPainter(board)
         this.painter.init()
         this.learner = new QLearner(0.1, 0.9)
+        this.score = new Score
     }
 
     draw(duration){
@@ -272,14 +308,6 @@ class Controller {
         //action is a number -1,0,+1
         action = Number(action)
 
-        //avoid going over borders
-        if ((hero.col + action) < 0) {
-            action = Math.max(0, action)
-        }
-        if ((hero.col + action) >= board.numColumns) {
-            action = Math.min(0, action)
-        }
-
         //apply the action
         board.setPosition(hero, hero.row, (hero.col + action + board.numColumns) % board.numColumns);
         
@@ -298,14 +326,8 @@ class Controller {
         board.addMoreFood()
         board.currentState = nextState
 
-        /*
-        //some feedback on performance
-        game.score[collidedWith]++;
-        var summary = "<br />green==food: " + game.score[game.food];
-        summary += "<br />gray=poison: " + game.score[game.poison];
-        summary += "<br />poison/food: " + Math.round(100*game.score[game.poison]/game.score[game.food]) + "%";
-        document.getElementById(game.scoreId).innerHTML = summary;
-        game.draw();
-        */
+        this.score.update(collidedWith)
+        this.score.show()
+       
     }
 }

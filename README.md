@@ -15,7 +15,7 @@ Demo
 
 [Example 1: Basic](https://nrox.github.io/q-learning.js/examples/basic/index.html)
 
-[Example 2: Caching food and avoiding poison](https://nrox.github.io/q-learning.js/examples/food-poison2/index.html)
+[Example 2: Caching food and avoiding poison](https://nrox.github.io/q-learning.js/examples/food-poison2/food-poison.html)
 
 [Example 3: Learning to keep distance](https://nrox.github.io/q-learning.js/examples/keep-distance/index.html)
 

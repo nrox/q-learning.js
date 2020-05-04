@@ -43,23 +43,27 @@
     Simple changes to this code can produce agents which battle, chase others, run away or follow paths.
 </p>
 
-<script type="text/javascript" src="index.js"></script>
+<script type="text/javascript" src="food-poison.js"></script>
 <script type="text/javascript">
     const controller = new Controller();
-    var stepTime = 500
+    const slowTime = 500
+    const fastTime = 20
+    var stepTime = slowTime
+
     var sid = setTimeout(slow, stepTime);
+
     function stepController(){
         controller.step()
-        controller.draw(0.9*stepTime)
+        controller.draw(0.67*stepTime)
     }
     function slow(){
-        stepTime = 500
+        stepTime = slowTime
         clearTimeout(sid)
         stepController()
         sid = setInterval(slow, stepTime);
     }
     function fast(){
-        stepTime = 20
+        stepTime = fastTime
         clearTimeout(sid)
         stepController()
         sid = setInterval(fast, stepTime);
