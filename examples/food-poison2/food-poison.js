@@ -70,8 +70,9 @@ class Board {
         this.numColumns = numColumns || 10
         this.board = []
         this.foodPoisonRatio = foodPoisonRatio === undefined ? 0.5 : foodPoisonRatio
-        this.density = density === undefined ? 0.2 : density
-        this.exploration = 0.2
+        this.density = density === undefined ? 0.67 : density
+        this.exploration = 0.1
+        this.visionRange = 1
     }
 
     /**
@@ -132,7 +133,7 @@ class Board {
     }
 
     /**
-     * get a string representation of the objects in the 3x3 square in front of the agent
+     * get a string representation of the objects in the width=3 x height=visionRange in front of the agent
      */
     getState(){
         let state = "S";
@@ -141,7 +142,7 @@ class Board {
         const numRows = this.numRows
         const numCols = this.numColumns
         for (var dCol = -1; dCol <= 1 ; dCol++){
-            for (var dRow = -3; dRow <= -1 ; dRow++){
+            for (var dRow = -this.visionRange; dRow <= -1 ; dRow++){
                 let row = (heroRow + dRow + numRows) % numRows
                 let col = (heroCol + dCol + numCols) % numCols
                 state += this.getAgent(row, col).type
